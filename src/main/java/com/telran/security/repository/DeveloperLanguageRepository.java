@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface DeveloperLanguageRepository extends JpaRepository<DeveloperLanguage, Integer> {
+public interface DeveloperLanguageRepository extends JpaRepository <DeveloperLanguage, Integer> {
 
-    List<DeveloperLanguage> findAllByDeveloper(Developer developer);
+    List <DeveloperLanguage> findAllByDeveloper(Developer developer);
 
     List <DeveloperLanguage> findAllByProgrammingLanguage(String language);
 }

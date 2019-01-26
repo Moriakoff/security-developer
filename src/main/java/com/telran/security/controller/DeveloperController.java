@@ -8,7 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -116,31 +118,100 @@ public class DeveloperController {
     public MyProfileResponse getMyProfile(Principal principal) {
         Developer developer = developerRepository.findByName(principal.getName());
 
-        List<String> programmingLanguages = developerLanguageRepository.findAllByDeveloper(developer)
+        return getMyProfileResponse(developer);
+
+    }
+
+    private MyProfileResponse getMyProfileResponse(Developer developer) {
+        Set <String> programmingLanguages = developerLanguageRepository.findAllByDeveloper(developer)
                 .stream()
                 .map(developerLanguage ->
                         developerLanguage
                                 .getProgrammingLanguage()
                                 .getLanguageName())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
+
+        Set <String> roles = developerRoleRepository.findAllByDeveloper(developer)
+                .stream()
+                .map(developerRole -> developerRole.getRole().getRoleName())
+                .collect(Collectors.toSet());
 
         return MyProfileResponse.builder()
                 .name(developer.getName())
                 .programmingLanguages(programmingLanguages)
+                .roles(roles)
                 .build();
-
     }
 
     @GetMapping("get-by-language/{name}")
-    public List <Developer> getAllDevelopersByLanguage(@RequestHeader("Authorization") String token,
+    public List <MyProfileResponse> getAllDevelopersByLanguage(@RequestHeader("Authorization") String token,
                                                                @PathVariable("name") String language) {
 
-        List<DeveloperLanguage> languages = developerLanguageRepository.findAllByProgrammingLanguage(language);
-
-        return languages.stream()
-                .map(developerLanguage -> developerLanguage.getDeveloper())
-                .collect(Collectors.toList());
+        return developerRepository.findAllDevelopersByLanguage(language);
     }
 
+    @PutMapping("/promote")
+    @Transactional
+    public MyProfileResponse promoteAdmin(@RequestParam("role") String role,
+                                          @RequestParam("name") String name) {
+
+        Developer developer = developerRepository.findByName(name);
+
+        List <String> developerRole = developerRoleRepository.findAllByDeveloper(developer)
+                .stream()
+                .map(devRole -> devRole.getRole().getRoleName())
+                .collect(Collectors.toList());
+
+        if (!developerRole.contains("ADMIN_DEVELOPER")) {
+
+            DeveloperRole devRole = DeveloperRole.builder()
+                    .developer(developer)
+                    .role(roleRepository.findRoleByRoleName(role))
+                    .build();
+
+            developerRoleRepository.save(devRole);
+        }
+
+        return getMyProfileResponse(developer);
+    }
+
+    @PutMapping("/demote")
+    @Transactional
+    public MyProfileResponse demoteAdmin(@RequestParam("name") String name) {
+
+        Developer developer = developerRepository.findByName(name);
+
+        Role role = roleRepository.findRoleByRoleName("ADMIN_DEVELOPER");
+
+        List <String> developerRole = developerRoleRepository.findAllByDeveloper(developer)
+                .stream()
+                .map(devRole -> devRole.getRole().getRoleName())
+                .collect(Collectors.toList());
+
+        if (developerRole.contains("ADMIN_DEVELOPER")) {
+
+            DeveloperRole devRole = developerRoleRepository.findByDeveloperAndAndRole(developer, role);
+
+            developerRoleRepository.delete(devRole);
+        }
+
+        return getMyProfileResponse(developer);
+
+    }
+
+    @GetMapping("/users")
+    @Transactional(readOnly = true)
+    public List <MyProfileResponse> getAllUsers() {
+
+        List <Developer> developersList = developerRepository.findAll();
+
+        List <MyProfileResponse> myProfileResponses = new ArrayList <>();
+
+        for (Developer developer : developersList) {
+            myProfileResponses.add(getMyProfileResponse(developer));
+        }
+
+        return myProfileResponses;
+    }
 
 }

@@ -19,4 +19,8 @@ public class ProgrammingLanguage {
 
     @Column(unique = true)
     private String languageName;
+
+    public ProgrammingLanguage(String languageName) {
+        this.languageName = languageName;
+    }
 }

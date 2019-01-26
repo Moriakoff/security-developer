@@ -21,7 +21,6 @@ public class DeveloperLanguage {
      * 4            2                   1
      * 5            2                   2
      * 6            3                   1
-     *
      */
 
     @Id

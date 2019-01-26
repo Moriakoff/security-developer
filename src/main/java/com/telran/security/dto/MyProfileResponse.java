@@ -1,9 +1,9 @@
 package com.telran.security.dto;
 
-import com.telran.security.entity.Role;
 import lombok.*;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,6 +13,12 @@ import java.util.List;
 public class MyProfileResponse {
 
     private String name;
-    private List<String> programmingLanguages;
-    private List <Role> roles;
+    private Set <String> programmingLanguages = new HashSet <>();
+    private Set <String> roles = new HashSet <>();
+
+    public MyProfileResponse(String name, String plLanguage, String role) {
+        this.name = name;
+        this.programmingLanguages.add(plLanguage);
+        this.roles.add(role);
+    }
 }

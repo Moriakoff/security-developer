@@ -22,4 +22,9 @@ public class Role {
 
     //@Column(unique = true)
     //private Boolean isDefault; -> true, false, null
+
+
+    public Role(String roleName) {
+        this.roleName = roleName;
+    }
 }

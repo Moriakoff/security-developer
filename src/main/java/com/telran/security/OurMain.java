@@ -28,7 +28,7 @@ public class OurMain implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception { //... - var args
-        initializeAll();
+        //initializeAll();
 
     }
 
@@ -60,7 +60,6 @@ public class OurMain implements CommandLineRunner {
                 .role(adminRole)
                 .developer(developer)
                 .build();
-
 
 
 //        developerRoleRepository.save(developerRoleBinding);

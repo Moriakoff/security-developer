@@ -28,7 +28,6 @@ public class SecurityFilter extends OncePerRequestFilter {
     private DeveloperRoleRepository developerRoleRepository;
 
 
-
     @Override
     protected void doFilterInternal(HttpServletRequest httpServletRequest,
                                     HttpServletResponse httpServletResponse,
@@ -45,16 +44,16 @@ public class SecurityFilter extends OncePerRequestFilter {
 
             if (developer != null) {
 
-                List<GrantedAuthority> roles = developerRoleRepository.findAllByDeveloper(developer)
+                List <GrantedAuthority> roles = developerRoleRepository.findAllByDeveloper(developer)
                         .stream()
                         .map(developerRole -> developerRole.getRole().getRoleName())
                         .map(roleName -> new SimpleGrantedAuthority(roleName))
                         .collect(Collectors.toList());
 
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    developer.getName(), //principal
-                    null,       //can skip this param
-                    roles                //ROLE INSERT HERE
+                        developer.getName(), //principal
+                        null,       //can skip this param
+                        roles                //ROLE INSERT HERE
                 );
 
                 System.out.println("Authentication: " + authentication);
