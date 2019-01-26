@@ -8,9 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -21,8 +19,8 @@ public class DeveloperController {
      * 3. Search all developers by programming language name
      * 4. ADMIN_ACCESS: add new programming languages
      * 5. Get MY profile
-     *      - add roles to response
-     *
+     * - add roles to response
+     * <p>
      * 6. Get all users
      * 7. Promote DEVELOPERs to ADMIN_DEVELOPERS
      * 8. Demote ADMIN_DEVELOPERs to DEVELOPERs
@@ -93,7 +91,7 @@ public class DeveloperController {
 
         Developer developer = developerRepository.findByName(principal.getName());
 
-        Set<String> allDeveloperLanguages = developerLanguageRepository.findAllByDeveloper(developer).stream()
+        Set <String> allDeveloperLanguages = developerLanguageRepository.findAllByDeveloper(developer).stream()
                 .map(x -> x.getProgrammingLanguage().getLanguageName())
                 .collect(Collectors.toSet());
 
@@ -118,26 +116,13 @@ public class DeveloperController {
     public MyProfileResponse getMyProfile(Principal principal) {
         Developer developer = developerRepository.findByName(principal.getName());
 
-//        List<String> programmingLanguages = developerLanguageRepository.findAllByDeveloper(developer)
-//                .stream()
-//                .map(developerLanguage ->
-//                        developerLanguage
-//                                .getProgrammingLanguage()
-//                                .getLanguageName())
-//                .collect(Collectors.toList());
-
-        List<DeveloperLanguage> developerLanguages = developerLanguageRepository.findAllByDeveloper(developer);
-
-        List<String> programmingLanguages = new ArrayList<>(); //Java, C#, Scala, JavaScript...
-
-        if (developerLanguages.size() > 0) {
-
-            for (DeveloperLanguage developerLanguage : developerLanguages) {
-                ProgrammingLanguage programmingLanguage = developerLanguage.getProgrammingLanguage();
-
-                programmingLanguages.add(programmingLanguage.getLanguageName());
-            }
-        }
+        List<String> programmingLanguages = developerLanguageRepository.findAllByDeveloper(developer)
+                .stream()
+                .map(developerLanguage ->
+                        developerLanguage
+                                .getProgrammingLanguage()
+                                .getLanguageName())
+                .collect(Collectors.toList());
 
         return MyProfileResponse.builder()
                 .name(developer.getName())
@@ -145,5 +130,17 @@ public class DeveloperController {
                 .build();
 
     }
+
+    @GetMapping("get-by-language/{name}")
+    public List <Developer> getAllDevelopersByLanguage(@RequestHeader("Authorization") String token,
+                                                               @PathVariable("name") String language) {
+
+        List<DeveloperLanguage> languages = developerLanguageRepository.findAllByProgrammingLanguage(language);
+
+        return languages.stream()
+                .map(developerLanguage -> developerLanguage.getDeveloper())
+                .collect(Collectors.toList());
+    }
+
 
 }
