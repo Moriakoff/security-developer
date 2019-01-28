@@ -6,11 +6,9 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.Tuple;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public class QueryRepositoryImpl implements QueryRepository {
@@ -21,44 +19,29 @@ public class QueryRepositoryImpl implements QueryRepository {
     @Override
     public List <MyProfileResponse> findAllDevelopersByLanguage(String language) {
 
-        String query = "  SELECT d.name ,role_name ,language_name FROM developer d " +
-                "INNER JOIN developer_language dl ON dl.developer_id = d.id " +
-                "INNER JOIN developer_role dr on dr.developer_id = d.id " +
-                "INNER JOIN programming_language pl on dl.programming_language_id = pl.id " +
-                "INNER JOIN role r on dr.role_id = r.id " +
-                "WHERE pl.language_name=:language";
+        String query = "SELECT new com.telran.security.dto.MyProfileResponse(d.name ,r.roleName ,pl.languageName)" +
+                "FROM Developer d " +
+                "JOIN DeveloperLanguage dl on dl.developer.id = d.id " +
+                "JOIN DeveloperRole dr on dr.developer.id = d.id " +
+                "JOIN ProgrammingLanguage pl on pl.id = dl.programmingLanguage.id " +
+                "JOIN Role r on dr.role.id = r.id " +
+                "WHERE pl.languageName=:language";
 
-        Map <String, MyProfileResponse> responses = new HashMap <>();
+        Query jpqlQuery = entityManager.createQuery(query);
+        jpqlQuery.setParameter("language", language);
 
-        Query nativeQuery = entityManager.createNativeQuery(query, Tuple.class);
-        nativeQuery.setParameter("language", language);
+        List <MyProfileResponse> result = jpqlQuery.getResultList();
 
-        List <Tuple> result = nativeQuery.getResultList();
-
-        return tupleToMyProfileResponse(result);
-    }
-
-    private List <MyProfileResponse> tupleToMyProfileResponse(List <Tuple> result) {
-        Map <String, MyProfileResponse> responses = new HashMap <>();
-
-        String name = "";
-        String role = "";
-        String prLanguage = "";
-
-        for (Tuple tuple : result) {
-
-            name = tuple.get("name").toString();
-            prLanguage = tuple.get("language_name").toString();
-            role = tuple.get("role_name").toString();
-
-            if (responses.containsKey(name)) {
-                responses.get(name).getRoles().add(role);
-                responses.get(name).getProgrammingLanguages().add(prLanguage);
-            }
-
-            responses.putIfAbsent(name, new MyProfileResponse(name, prLanguage, role));
-        }
-
-        return new ArrayList <>(responses.values());
+        return new ArrayList <>(
+                result.stream()
+                .collect(Collectors.toMap(
+                        MyProfileResponse::getName,
+                        myProfileResponse -> myProfileResponse,
+                        (oldValue, newValue) -> {
+                            newValue.getRoles().addAll(oldValue.getRoles());
+                            newValue.getProgrammingLanguages().addAll(oldValue.getProgrammingLanguages());
+                            return newValue;
+                        }))
+                .values());
     }
 }
